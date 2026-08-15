@@ -4,14 +4,14 @@
 # Script Name : rman_full.sh
 #
 # Purpose:
-# Performs a weekly RMAN Level 0 backup of the Oracle 12.2.0.1 database.
+# Performs a weekly RMAN Level 0 backup of the Oracle 23.26.1.0.0 database.
 #
 # Backup Includes:
 # - Database
 # - Archived Redo Logs
 # - Current Control File
 #
-# Oracle Version : 12.2.0.1 Enterprise Edition
+# Oracle Version : 23.26.1.0.0 Enterprise Edition
 #
 ###############################################################################
 
@@ -20,8 +20,8 @@
 ##############################
 
 export ORACLE_BASE=/u01/app/oracle
-export ORACLE_HOME=/u01/app/oracle/product/12.2.0.1/dbhome_1
-export ORACLE_SID=ORCL12C
+export ORACLE_HOME=/u01/app/oracle/product/23.0.0/dbhome_1
+export ORACLE_SID=FORMSCDB
 export PATH=$ORACLE_HOME/bin:$PATH
 export NLS_DATE_FORMAT='DD-MON-YYYY HH24:MI:SS'
 
@@ -30,15 +30,14 @@ export NLS_DATE_FORMAT='DD-MON-YYYY HH24:MI:SS'
 ##############################
 
 BACKUP_ROOT=/u03/backup
-LOG_DIR=/opt/oracle/logs
+LOG_DIR=/home/oracle/scripts/logs
 
 SECTION_SIZE=10G
 MIN_FREE_GB=10
 
-BACKUP_DATE=$(date +%Y%m%d)
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-BACKUP_DIR=${BACKUP_ROOT}/${BACKUP_DATE}
+BACKUP_DIR=${BACKUP_ROOT}/FORMSCDB
 LOG_FILE=${LOG_DIR}/rman_full_${TIMESTAMP}.log
 
 ##############################
@@ -147,17 +146,14 @@ ALLOCATE CHANNEL c1 DEVICE TYPE DISK;
 BACKUP AS COMPRESSED BACKUPSET
 SECTION SIZE ${SECTION_SIZE}
 INCREMENTAL LEVEL 0
-TAG 'LEVEL0_FULL'
 FORMAT '${BACKUP_DIR}/L0_%d_%T_%U.bkp'
 DATABASE;
 
 BACKUP AS COMPRESSED BACKUPSET
-TAG 'ARCHIVELOG_L0'
 FORMAT '${BACKUP_DIR}/ARCH_%d_%T_%U.bkp'
 ARCHIVELOG ALL DELETE INPUT;
 
 BACKUP AS COMPRESSED BACKUPSET
-TAG 'CONTROLFILE_L0'
 FORMAT '${BACKUP_DIR}/CTRL_%d_%T_%U.bkp'
 CURRENT CONTROLFILE;
 
