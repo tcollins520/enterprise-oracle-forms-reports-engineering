@@ -1,0 +1,11 @@
+# Oracle RMAN Backup Schedule
+#
+# Sunday      : Weekly Level 0 Full Backup
+# Monday-Sat  : Daily Level 1 Incremental Backup
+#
+
+# Weekly Level 0 Backup
+0 2 * * 0 /opt/oracle/scripts/rman_full.sh >> /opt/oracle/logs/cron/rman_full_cron.log 2>&1
+
+# Daily Level 1 Backup
+0 2 * * 1-6 /opt/oracle/scripts/rman_incremental.sh >> /opt/oracle/logs/cron/rman_incremental_cron.log 2>&1
