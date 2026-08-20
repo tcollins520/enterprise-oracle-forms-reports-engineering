@@ -63,7 +63,6 @@ variable "database_instance_type" {
   type        = string
 }
 
-
 variable "database_instance_type_secondary" {
   description = "EC2 instance type for the secondary Oracle Database server"
   type        = string
@@ -80,6 +79,13 @@ variable "application_instance_type_secondary" {
   type        = string
   default     = "t3.large"
 }
+
+variable "application_instance_type_tertiary" {
+  description = "EC2 instance type for the third WebLogic application server"
+  type        = string
+  default     = "t3.large"
+}
+
 
 ################################################################################
 # Admin Access

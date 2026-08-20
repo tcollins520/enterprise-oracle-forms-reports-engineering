@@ -43,6 +43,12 @@ resource "aws_instance" "bastion" {
 
   }
 
+  lifecycle {
+    ignore_changes = [
+      ami
+    ]
+  }
+
   tags = merge(
     local.common_tags,
     {
@@ -50,5 +56,4 @@ resource "aws_instance" "bastion" {
       Role = "JumpHost"
     }
   )
-
 }
