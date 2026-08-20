@@ -3,15 +3,31 @@
 **Oracle Database 23ai • Oracle Forms & Reports 14.1.2 • WebLogic Server
 14.1.2 • JDK 17 • AWS • Terraform • Ansible • WLST**
 
-## Project Status --- 2026-08-20----Project still in Progress
+## Project Status --- 2026-08-20---Project still in Progress
+
+Business Application
+
+Employee Management System
+
+The platform will host an Oracle Forms-based Employee Management application backed by Oracle Database, with Oracle Reports providing reporting capabilities.
+```
+Employee Management
+        │
+        ├── Oracle Forms
+        │      └── WLS_FORMS
+        │
+        ├── Oracle Reports
+        │      └── WLS_REPORTS
+        │
+        └── Oracle Database
+```
 
 The new **app03** Forms/Reports platform is operational at the WebLogic
 layer.
 
 # Architecture
 
-## Current platform
-
+### Target Platform Architecture
 ```text
                                   AWS
                                    │
