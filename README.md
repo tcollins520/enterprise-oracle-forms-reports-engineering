@@ -3,31 +3,23 @@
 **Oracle Database 23ai • Oracle Forms & Reports 14.1.2 • WebLogic Server
 14.1.2 • JDK 17 • AWS • Terraform • Ansible • WLST**
 
-## Project Status --- 2026-08-20---Project still in Progress
+## Project Status — 2026-08-20
 
-Business Application
+The new **app03** Forms/Reports platform is operational and validated at the
+WebLogic, Forms, and Reports servlet layers.
 
-Employee Management System
+The platform was built using Oracle's graphical configuration wizards, with
+WLST and command-line tools used for validation, lifecycle management, and
+targeted troubleshooting.
 
-The platform will host an Oracle Forms-based Employee Management application backed by Oracle Database, with Oracle Reports providing reporting capabilities.
-```
-Employee Management
-        │
-        ├── Oracle Forms
-        │      └── WLS_FORMS
-        │
-        ├── Oracle Reports
-        │      └── WLS_REPORTS
-        │
-        └── Oracle Database
-```
-
-The new **app03** Forms/Reports platform is operational at the WebLogic
-layer.
+The next major milestone is the clean-room **Employee Management**
+demonstration application, which will provide the final Forms → Reports
+end-to-end validation without using proprietary company code.
 
 # Architecture
 
-### Target Platform Architecture
+## Current platform
+
 ```text
                                   AWS
                                    │
@@ -77,28 +69,32 @@ Managed-server administration ports:
 -   `WLS_REPORTS` --- `9992`
 ```
 ## Current Status
-```
-  Component                           Status
-  ----------------------------------- ------------------------------------
-  AWS infrastructure                  ✅
-  Linux / JDK foundation              ✅
-  Fusion Middleware 14.1.2            ✅
-  WebLogic 14.1.2                     ✅
-  RCU repository                      ✅
-  WebLogic domain                     ✅
-  Node Manager                        ✅
-  AdminServer                         ✅
-  WLS_FORMS                           ✅
-  Forms servlet                       ✅ Validated
-  WLS_REPORTS                         ✅
-  Reports Tools instance              ✅
-  Reports directory structure         ✅
-  Reports servlet                     ✅ HTTP 200
-  Reports administrative commands     🟡 `REP-56071` authorization issue
-  OHS integration                     ⏳ Planned
-  Employee Management application     ⏳
-  Final Forms → Reports integration   ⏳
-```
+
+```text
+Component                           Status
+----------------------------------- ------------------------------------
+AWS infrastructure                  ✅
+Linux / JDK foundation              ✅
+Fusion Middleware 14.1.2            ✅
+WebLogic 14.1.2                     ✅
+RCU repository                      ✅
+WebLogic domain                     ✅
+Node Manager                        ✅
+AdminServer                         ✅
+WLS_FORMS                           ✅
+Forms servlet                       ✅ Validated
+Forms test.fmx resolution           ✅ Validated
+WLS_REPORTS                         ✅
+Reports Tools instance              ✅
+Reports directory structure         ✅
+Reports servlet                     ✅ HTTP 200
+Reports Server / rwEng-0            ✅ Running / Ready
+Reports OPSS/JPS authorization      ✅ Resolved
+RW_ADMINISTRATOR authorization      ✅ weblogic granted
+OHS integration                     ⏳ Planned
+Employee Management application     ⏳ Next
+Final Forms → Reports integration   ⏳ Application-dependent
+---
 
 ### Oracle Configuration Method
 
@@ -123,6 +119,38 @@ WLST and command-line tools were then used for validation, lifecycle management,
     control.
 -   Configured WebLogic SSL.
 -   Validated the Forms servlet directly through WebLogic.
+---
+
+```markdown
+## Employee Management Demonstration
+
+The next major milestone is a clean-room **Employee Management** application
+created specifically for this portfolio project.
+
+No proprietary company Forms source will be used.
+
+The application will demonstrate the real operational workflow:
+
+```text
+Employee Management Form (.fmb)
+          │
+          │ compile
+          ▼
+       Employee.fmx
+          │
+          ▼
+    Oracle Forms Runtime
+          │
+          │ Forms → Reports call
+          ▼
+     Oracle Reports Server
+          │
+          ▼
+        rwEng-0
+          │
+          ▼
+     Employee Report
+---
 
 ### Reports
 
@@ -157,43 +185,45 @@ HTTP 200
 
 The servlet is therefore deployed and responding.
 
-## Current Reports Blocker
+```markdown
+## Reports Authorization — Resolved
 
-The remaining issue is **Reports/JPS authorization**, not WebLogic
-startup or servlet deployment.
+The Reports/JPS authorization issue encountered during validation was resolved
+through the Reports application policy and WebLogic identity store.
 
-Without authentication:
+The `reports` application stripe contains the Oracle Reports roles:
 
-``` text
-REP-51019: System user authentication is missing.
-```
+```text
+RW_OPERATOR
+RW_ADMINISTRATOR
+RW_BASIC_USER
+RW_POWER_USER
+RW_MONITOR
+RW_DEVELOPER
+---
 
-Using the WebLogic user:
+The WebLogic weblogic user was granted membership in:
 
-``` text
-authid=weblogic/...
-```
+RW_ADMINISTRATOR
 
-currently returns:
+WLST confirmed the effective Reports permissions:
 
-``` text
-REP-56071: The requested operation is unauthorized.
-```
-
-The Reports JPS policy currently contains:
-
-``` text
-rw_administrator
-```
-
-with the `weblogic` user as a member and permissions for:
-
-``` text
 oracle.reports.server.ReportsPermission
-oracle.reports.server.WebCommandPermission
-```
+Target: report=* server=* destype=* desformat=* allowcustomargs=true
+Actions: *
 
-The next session should continue from this authorization issue.
+
+oracle.reports.server.WebCommandPermission
+Target: webcommands=* server=*
+Actions: execute
+
+Reports validation also confirmed:
+```
+WLS_REPORTS       RUNNING
+Reports servlet   HTTP 200
+Reports Server    rep_wls_reports_formsprod-app03
+Reports engine    rwEng-0 READY
+```
 
 ## Important Configuration
 
@@ -252,17 +282,18 @@ curl -k -i \
 "https://10.20.2.206:9512/reports/rwservlet/showenv"
 ```
 
+```markdown
 ## Next Steps
 
-1.  Resolve Reports/JPS `REP-56071`.
-2.  Validate authenticated Reports web commands.
-3.  Verify Reports Server operation.
-4.  Test database connectivity from Reports.
-5.  Execute an actual report.
-6.  Validate Forms-to-Reports integration.
-7.  Return to OHS integration.
-8.  Deploy the Employee Management application.
-9.  Complete final production hardening and automation.
+1. Build the clean-room Employee Management Forms application.
+2. Create the supporting employee database objects and sample data.
+3. Compile and deploy the Employee `.fmb` → `.fmx`.
+4. Create and deploy the Employee Report.
+5. Execute the report through the real Forms → Reports workflow.
+6. Validate report output and capture final end-to-end evidence.
+7. Return to OHS integration.
+8. Complete final production hardening and automation.
+```
 
 # Engineering Focus
 
@@ -407,7 +438,7 @@ The final environment will combine **enterprise Oracle application technologies 
 
 ## Current Milestone
 
-**Platform foundation complete → Forms runtime validated → Reports troubleshooting in progress → Application deployment next → OHS/ALB production front end afterward.**
+**Platform foundation complete → Forms runtime validated → Reports authorization resolved → Employee Management application next → Forms-to-Reports end-to-end validation → OHS/ALB production front end.**
 
 
 ## Engineering Lessons
