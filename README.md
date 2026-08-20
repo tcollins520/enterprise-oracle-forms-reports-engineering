@@ -3,7 +3,7 @@
 **Oracle Database 23ai • Oracle Forms & Reports 14.1.2 • WebLogic Server
 14.1.2 • JDK 17 • AWS • Terraform • Ansible • WLST**
 
-## Project Status --- 2026-08-20
+## Project Status --- 2026-08-20----Project still in Progress
 
 The new **app03** Forms/Reports platform is operational at the WebLogic
 layer.
@@ -34,7 +34,7 @@ layer.
 ```
 
 ### Application server
-
+```
   Component     Value
   ------------- --------------------------------------------
   Host          `formsprod-app03`
@@ -43,7 +43,7 @@ layer.
   Domain Home   `/u01/app/oracle/config/domains/formsprod`
   Oracle Home   `/u01/app/oracle/product/fmw_14.1.2`
   Java          `/u01/app/java/jdk-17.0.12`
-
+```
 
 ### WebLogic topology
 ```
