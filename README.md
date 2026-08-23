@@ -3,18 +3,28 @@
 **Oracle Database 23ai • Oracle Forms & Reports 14.1.2 • WebLogic Server
 14.1.2 • JDK 17 • AWS • Terraform • Ansible • WLST**
 
-## Project Status — 2026-08-20
+## Project Status — 2026-08-22
 
-The new **app03** Forms/Reports platform is operational and validated at the
-WebLogic, Forms, and Reports servlet layers.
+The new **app03** Forms/Reports platform is deployed and validated through the
+WebLogic, Forms, Reports, database, and application-artifact layers.
 
-The platform was built using Oracle's graphical configuration wizards, with
-WLST and command-line tools used for validation, lifecycle management, and
-targeted troubleshooting.
+Validation evidence confirms:
+```
+- Oracle Database 23ai / FORMSCDB / FORMSPDB is operational.
+- RMAN Level 0 full and Level 1 incremental backups completed successfully.
+- The `EMPLOYEE_APP` schema is present in `FORMSPDB`.
+- `EMPLOYEES` and `DEPARTMENTS` tables are present and their definitions were validated.
+- WebLogic `AdminServer`, `WLS_FORMS`, `WLS_REPORTS`, and Node Manager are running.
+- Forms servlet on port `9501` returns HTTP 200.
+- Reports servlet on port `9512` is deployed and responding.
+- Reports Server / `rwEng-0` is running and ready.
+- The clean-room Employee Management Forms source was compiled successfully
+  from `.fmb` to `.fmx` and the compiled artifact was placed in the deployment directory.
+```
 
-The next major milestone is the clean-room **Employee Management**
-demonstration application, which will provide the final Forms → Reports
-end-to-end validation without using proprietary company code.
+The remaining application-level milestone is the interactive Forms runtime launch
+and final Forms → Reports execution using the Employee Management application.
+OHS/ALB front-end integration remains a subsequent production front-end task.
 
 # Architecture
 
@@ -72,6 +82,32 @@ Managed-server administration ports:
 
 ```text
 Component                           Status
+----------------------------------- --------------------------------------------
+AWS infrastructure                  ✅
+Linux / JDK foundation              ✅
+Fusion Middleware 14.1.2            ✅
+WebLogic 14.1.2                     ✅
+RCU repository                      ✅
+WebLogic domain                     ✅
+Node Manager                        ✅ Running
+AdminServer                         ✅ Running
+WLS_FORMS                           ✅ Running
+Forms servlet                       ✅ HTTP 200
+Forms test.fmx resolution           ✅ Validated
+WLS_REPORTS                         ✅ Running
+Reports Tools instance              ✅
+Reports directory structure         ✅
+Reports servlet                     ✅ HTTP 200
+Reports Server / rwEng-0            ✅ Running / Ready
+Reports OPSS/JPS authorization      ✅ Resolved
+RW_ADMINISTRATOR authorization      ✅ weblogic granted
+Employee database schema            ✅ Validated
+Employee Management .fmb/.fmx      ✅ Compiled / deployed
+Interactive Forms runtime           ⏳ Final validation
+Forms → Reports end-to-end          ⏳ Final validation
+OHS integration                     ⏳ Planned
+```
+```
 ----------------------------------- ------------------------------------
 AWS infrastructure                  ✅
 Linux / JDK foundation              ✅
@@ -124,33 +160,22 @@ WLST and command-line tools were then used for validation, lifecycle management,
 ```markdown
 ## Employee Management Demonstration
 
-The next major milestone is a clean-room **Employee Management** application
-created specifically for this portfolio project.
+The clean-room **Employee Management** application is being built specifically
+for this portfolio project. No proprietary company Forms source is used.
 
-No proprietary company Forms source will be used.
+The database layer and Forms build/deployment artifacts are now validated:
 
-The application will demonstrate the real operational workflow:
+- Schema: `EMPLOYEE_APP`
+- PDB: `FORMSPDB`
+- Tables: `EMPLOYEES`, `DEPARTMENTS`
+- Forms source: `/home/oracle/employee-management/source/test.fmb`
+- Compiled Forms artifact: `/home/oracle/employee-management/compiled/test.fmx`
+- Deployment artifact: `/home/oracle/employee-management/deploy/test.fmx`
 
-```text
-Employee Management Form (.fmb)
-          │
-          │ compile
-          ▼
-       Employee.fmx
-          │
-          ▼
-    Oracle Forms Runtime
-          │
-          │ Forms → Reports call
-          ▼
-     Oracle Reports Server
-          │
-          ▼
-        rwEng-0
-          │
-          ▼
-     Employee Report
----
+The remaining step is to prove the interactive runtime session and complete the
+Forms → Reports workflow with the Employee Management application.
+
+The application demonstrates the real operational workflow:
 
 ### Reports
 
@@ -262,7 +287,108 @@ rw_administrator
 
 ## Validation Commands
 
+### WebLogic / Forms / Reports runtime
+
 Check managed-server state:
+
+```text
+wls:/nm/formsprod> nmServerStatus('WLS_FORMS')
+wls:/nm/formsprod> nmServerStatus('WLS_REPORTS')
+```
+
+Check listeners:
+
+```bash
+ss -lntp | grep -E '5556|9002|9501|9512|9991|9992'
+```
+
+Validate the Forms servlet:
+
+```bash
+curl -k -I --max-time 10 \
+  "https://10.20.2.206:9501/forms/frmservlet"
+```
+
+Expected:
+
+```text
+HTTP 200
+content-type: text/html
+```
+
+Validate the Reports servlet:
+
+```bash
+curl -k -I --max-time 10 \
+  "https://10.20.2.206:9512/reports/rwservlet/showenv"
+```
+
+Expected:
+
+```text
+HTTP 200
+```
+
+Validate the Reports engine:
+
+```bash
+pgrep -af 'RWEngine|rwEng'
+```
+
+Expected process includes:
+
+```text
+oracle.reports.engine.RWEngine
+name=rwEng-0
+server=rep_wls_reports_formsprod-app03
+```
+
+### Employee Management database
+
+Connect to the application schema:
+
+```bash
+sqlplus EMPLOYEE_APP@db02:1521/FORMSPDB
+```
+
+Validate schema, database, and service:
+
+```sql
+SELECT
+    USER AS schema_name,
+    SYS_CONTEXT('USERENV','DB_NAME') AS database_name,
+    SYS_CONTEXT('USERENV','SERVICE_NAME') AS service_name
+FROM dual;
+```
+
+Validate application tables:
+
+```sql
+SELECT table_name, num_rows
+FROM user_tables
+WHERE table_name IN ('EMPLOYEES','DEPARTMENTS')
+ORDER BY table_name;
+```
+
+Validate definitions:
+
+```sql
+DESC DEPARTMENTS;
+DESC EMPLOYEES;
+```
+
+### Employee Management Forms artifacts
+
+```bash
+find /home/oracle/employee-management/source -type f -name '*.fmb' -ls
+find /home/oracle/employee-management/compiled -type f -name '*.fmx' -ls
+find /home/oracle/employee-management/deploy -type f -name '*.fmx' -ls
+```
+
+The current evidence shows `test.fmb` compiled successfully to `test.fmx`
+and the compiled artifact was copied into the deployment directory.
+
+
 
 ``` text
 wls:/nm/formsprod> nmServerStatus('WLS_FORMS')
@@ -285,15 +411,13 @@ curl -k -i \
 ```markdown
 ## Next Steps
 
-1. Build the clean-room Employee Management Forms application.
-2. Create the supporting employee database objects and sample data.
-3. Compile and deploy the Employee `.fmb` → `.fmx`.
-4. Create and deploy the Employee Report.
-5. Execute the report through the real Forms → Reports workflow.
-6. Validate report output and capture final end-to-end evidence.
-7. Return to OHS integration.
-8. Complete final production hardening and automation.
-```
+1. Complete the interactive Employee Management Forms runtime validation.
+2. Create/deploy the Employee Report if not already completed.
+3. Execute the report through the real Forms → Reports workflow.
+4. Validate report output and capture final end-to-end evidence.
+5. Return to OHS integration.
+6. Complete final production hardening and automation.
+
 
 # Engineering Focus
 
@@ -438,7 +562,7 @@ The final environment will combine **enterprise Oracle application technologies 
 
 ## Current Milestone
 
-**Platform foundation complete → Forms runtime validated → Reports authorization resolved → Employee Management application next → Forms-to-Reports end-to-end validation → OHS/ALB production front end.**
+**Platform foundation complete → Database validated → Forms/Reports services validated → Employee Management database/build/deployment validated → Interactive Forms runtime validation → Forms-to-Reports end-to-end validation → OHS/ALB production front end.**
 
 
 ## Engineering Lessons
@@ -466,11 +590,6 @@ Validation
 ```
 
 ## Screenshot Documentation
-
-The installation and configuration screenshots are maintained separately
-in:
-
-**Oracle Forms & Reports Installation Screenshots --- Labeled**
 
 The screenshot set focuses on successful configuration steps and the
 troubleshooting changes that materially advanced the platform.
